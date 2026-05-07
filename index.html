@@ -14,9 +14,7 @@ body{
   text-align:center;
 }
 
-h1{
-  color:#00ff66;
-}
+h1{ color:#00ff66; }
 
 table{
   width:100%;
@@ -44,13 +42,14 @@ td{
   animation:piscar 1s infinite;
 }
 
-.agendado{
-  color:#ffd700;
+.amanha{
+  background:#ffd700 !important;
+  color:#000;
+  font-weight:bold;
 }
 
-.realizado{
-  color:#aaa;
-}
+.agendado{ color:#ffd700; }
+.realizado{ color:#aaa; }
 
 @keyframes piscar{
   0%{opacity:1;}
@@ -79,9 +78,7 @@ button{
   cursor:pointer;
 }
 
-button:hover{
-  background:#00cc55;
-}
+button:hover{ background:#00cc55; }
 </style>
 </head>
 
@@ -91,7 +88,6 @@ button:hover{
 
 <div class="alerta" id="alerta"></div>
 
-<!-- CONTROLE (SEM ALTERAR LAYOUT PRINCIPAL) -->
 <div>
   <input type="date" id="novaData" min="2026-05-01" max="2026-05-31">
   <input type="time" id="novaHora" value="21:00">
@@ -111,8 +107,6 @@ button:hover{
 </table>
 
 <script>
-
-// 🔥 BASE + SALVAMENTO
 let showsMichael = JSON.parse(localStorage.getItem("showsMichaelMaio2026")) || [
   {data:"2026-05-01", hora:"21:00", show:"Especial Michael Jackson Tributo"},
   {data:"2026-05-04", hora:"21:00", show:"Michael Jackson | Tributo"},
@@ -129,21 +123,22 @@ let showsMichael = JSON.parse(localStorage.getItem("showsMichaelMaio2026")) || [
   {data:"2026-05-29", hora:"21:00", show:"Especial Michael Jackson Tributo"}
 ];
 
-// DIA DA SEMANA AUTOMÁTICO
 function diaSemana(data){
   const dias = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
   const d = new Date(data + "T00:00:00");
   return dias[d.getDay()];
 }
 
-// RENDER
 function renderizar(){
-  const hoje = new Date().toISOString().split("T")[0];
+  const hojeData = new Date();
+  hojeData.setHours(0,0,0,0);
+
   const tabela = document.getElementById("tabela");
   const alerta = document.getElementById("alerta");
 
   tabela.innerHTML = "";
   let temShowHoje = false;
+  let temShowAmanha = false;
 
   showsMichael.sort((a,b)=>a.data.localeCompare(b.data));
 
@@ -151,11 +146,20 @@ function renderizar(){
     let status = "Agendado";
     let classe = "agendado";
 
-    if(item.data === hoje){
+    const dataShow = new Date(item.data + "T00:00:00");
+    const diferencaDias = Math.round((dataShow - hojeData) / (1000 * 60 * 60 * 24));
+
+    if(diferencaDias === 0){
       status = "🟢 HOJE TEM SHOW";
       classe = "hoje";
       temShowHoje = true;
-    } else if(item.data < hoje){
+    } 
+    else if(diferencaDias === 1){
+      status = "🟡 FALTA 1 DIA";
+      classe = "amanha";
+      temShowAmanha = true;
+    } 
+    else if(diferencaDias < 0){
       status = "Realizado";
       classe = "realizado";
     }
@@ -170,12 +174,18 @@ function renderizar(){
     `;
   });
 
-  alerta.innerHTML = temShowHoje 
-    ? "🟢 HOJE TEM SHOW MICHAEL JACKSON!"
-    : "⚪ Nenhum show Michael hoje";
+  if(temShowHoje){
+    alerta.innerHTML = "🟢 HOJE TEM SHOW MICHAEL JACKSON!";
+    alerta.style.color = "#00ff66";
+  } else if(temShowAmanha){
+    alerta.innerHTML = "🟡 ATENÇÃO: FALTA 1 DIA PARA O SHOW!";
+    alerta.style.color = "#ffd700";
+  } else {
+    alerta.innerHTML = "⚪ Nenhum show Michael hoje";
+    alerta.style.color = "#00ff66";
+  }
 }
 
-// ADICIONAR DATA EXTRA
 function adicionarDataExtra(){
   const data = document.getElementById("novaData").value;
   const hora = document.getElementById("novaHora").value;
@@ -191,21 +201,16 @@ function adicionarDataExtra(){
     show:"Data Extra | Michael Jackson Tributo"
   });
 
-  // SALVA AUTOMÁTICO
   localStorage.setItem("showsMichaelMaio2026", JSON.stringify(showsMichael));
 
-  // LIMPA CAMPOS
   document.getElementById("novaData").value = "";
   document.getElementById("novaHora").value = "21:00";
 
   renderizar();
 }
 
-// INICIAR
 renderizar();
-
 </script>
-<hr>
-<a href="index01.html"><h2>Ver Tabela Com aviso</h2></a>
+
 </body>
 </html>
